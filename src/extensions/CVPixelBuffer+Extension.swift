@@ -17,6 +17,9 @@ public extension CVPixelBuffer {
     }
   }
 
+  var width: Int { return CVPixelBufferGetWidth(self) }
+  var height: Int { return CVPixelBufferGetHeight(self) }
+
   func lock(_ flag: LockFlag, closure: (() -> Void)?) {
     if CVPixelBufferLockBaseAddress(self, flag.flag()) == kCVReturnSuccess {
       if let c = closure {

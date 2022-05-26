@@ -22,8 +22,22 @@ extension NSImage {
       bitmapInfo = CGImageAlphaInfo.alphaOnly.rawValue
     }
 
-    let width = Int(size.width)
-    let height = Int(size.height)
+    // 从NSImage获取的size是Point, 而非pixel
+    // let width = Int(size.width)
+    // let height = Int(size.height)
+
+    // 从CGImage获取pixel
+    // let cgImage = self.cgImage(forProposedRect: nil, context: nil, hints: nil)
+    // let width = cgImage!.width
+    // let height = cgImage!.height
+
+    // 从NSImage的first rep获取pixel
+    guard let rep = representations.first as? NSBitmapImageRep else {
+      return nil
+    }
+    let width = rep.pixelsWide
+    let height = rep.pixelsHigh
+
     let attrs = [kCVPixelBufferCGImageCompatibilityKey: kCFBooleanTrue,
                  kCVPixelBufferCGBitmapContextCompatibilityKey: kCFBooleanTrue] as CFDictionary
 
