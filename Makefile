@@ -1,25 +1,34 @@
-CC=clang -arch arm64 -arch x86_64 -mmacosx-version-min=12.0
-SWIFTC=swiftc
-SWIFTSRC=$(shell find $(SRC) -type f -name "*.swift")
-SRC=src
-BUILD=build
-TARGET=$(BUILD)/app
+swift-src = $(shell find src -type f -name "*.swift")
 
-all: $(BUILD) $(TARGET)
+all: build/app
 
-$(TARGET): $(SWIFTSRC) $(BUILD)/rtmpext.o
-	$(SWIFTC) -import-objc-header $(SRC)/bridge.h -Iinclude -lrtmp -Llib -o $@ $^
+run: build/app
+	@$<
 
-$(BUILD):
-	@mkdir -p $@
+test: build/gtest build/swifttest run/gtest
 
-$(BUILD)/rtmpext.o : $(SRC)/rtmpext.c
-	$(CC) -c -o $@ $<
+run/gtest: build/gtest
+	@$<
 
-run: $(TARGET)
-	@$(TARGET)
+run/swifttest: build/swifttest
+	@$<
+
+build/swifttest: test/test.swift $(swift-src)
+	@swiftc -import-objc-header src/bridge.h -Iinclude -lrtmp -Llib -o $@ build/rtmpext.o $(subst src/app.swift, ,$(shell find src -type f -name "*.swift")) test/test.swift
+
+build/gtest: build/rtmpext.o test/rtmpext_test.cc
+	@mkdir -p $(@D)
+	@clang++ -std=c++11 `pkg-config --cflags --libs gtest` -Bstatic -Iinclude -lrtmp -Llib -lgtest_main -o $@ $^
+
+build/app: build/rtmpext.o $(swift-src)
+	@mkdir -p $(@D)
+	@swiftc -import-objc-header src/bridge.h -Iinclude -lrtmp -L/usr/local/lib -o $@ build/rtmpext.o $(swift-src)
+
+build/rtmpext.o: src/rtmp/rtmpext.c
+	@mkdir -p $(@D)
+	@clang -mmacosx-version-min=12.0 -arch x86_64 -arch arm64 -c -o $@ $<
 
 clean:
-	@rm -rf $(BUILD)
+	@rm -rf build
 
-.PHONY: clean run all
+.PHONY: clean run run/swiftest run/gtest test all
