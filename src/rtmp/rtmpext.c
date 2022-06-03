@@ -5,7 +5,8 @@
 #include <string.h>
 
 void RTMPEXT_Open(RTMP *rtmp) {
-  char *url = "rtmp://shgbit.xyz/app/x";
+  // char *url = "rtmp://shgbit.xyz/app/x";
+  char *url = "rtmp://live.nonocast.cn/foo/77";
 
   if (RTMP_SetupURL(rtmp, url) < 0) {
     RTMP_Log(RTMP_LOGERROR, "RTMP_SetupURL FAILED: %s", url);
@@ -118,9 +119,16 @@ size_t RTMPEXT_MakeVideoMetadataTag(const uint8_t *sps, size_t sps_size, const u
  * flv tag header (11 bytes)
  * video tag header (1 byte) 0x17 or 0x27
  * AVCVIDEOPACKET header (4 bytes) AVCPacketType==AVC NALU, CompoistionTime
+ * PAYLOAD: NALU-length NALU, payload已经包含NALU-length
  */
 size_t RTMPEXT_MakeVideoNALUTag(const int32_t timestamp, const uint8_t *nalu, size_t nalu_length, uint8_t *buffer, size_t buffer_size) {
   uint8_t *p = buffer;
+
+  size_t total = nalu_length + 16;
+  memcpy(buffer + 16, nalu, nalu_length);
+
+  RTMP_LogHex(RTMP_LOGINFO, nalu, 16);
+
   // byte 1: video (9)
   *p++ = 0x09;
   // byte 2-4: data size
@@ -131,20 +139,11 @@ size_t RTMPEXT_MakeVideoNALUTag(const int32_t timestamp, const uint8_t *nalu, si
   *p++ = *data_size_ptr;
 
   // timestamp: 4
-  RTMP_LogHex(RTMP_LOGINFO, &timestamp, sizeof(timestamp));
-
   uint8_t *timestamp_ptr = (uint8_t *) &timestamp;
   *p++ = *(timestamp_ptr + 2);
   *p++ = *(timestamp_ptr + 1);
   *p++ = *timestamp_ptr;
   *p++ = *(timestamp_ptr + 3);
-
-  RTMP_LogHex(RTMP_LOGINFO, p - 4, 4);
-
-  // *p++ = 0x00;
-  // *p++ = 0x00;
-  // *p++ = 0x01;
-  // *p++ = 0x00;
 
   // stream id: 3
   *p++ = 0;
@@ -162,7 +161,5 @@ size_t RTMPEXT_MakeVideoNALUTag(const int32_t timestamp, const uint8_t *nalu, si
   *p++ = 0;
   *p++ = 0;
 
-  memcpy(buffer + 16, nalu, nalu_length);
-  p += nalu_length;
-  return p - buffer;
+  return total;
 }

@@ -72,6 +72,7 @@ class RTMPDelegate: EncoderDelegate {
     var data = Data(count: 16 + dataLength)
     data.withUnsafeMutableBytes { buffer in
       let count = RTMPEXT_MakeVideoNALUTag(Int32(timestamp), dataPointer!, dataLength, buffer.baseAddress, buffer.count)
+      print("RTMP_Write: ", count)
 
       RTMP_Write(&rtmp, buffer.baseAddress, Int32(count))
     }

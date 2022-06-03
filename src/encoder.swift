@@ -12,7 +12,7 @@ protocol EncoderDelegate {
 class VTH264Encoder {
   var width: Int
   var height: Int
-  var fps = 1
+  var fps = 10
   var interval: CMTime { return CMTime(value: 1, timescale: CMTimeScale(fps)) }
   var bitrate: Int { return width * height * 2 * 32 }
   var dataRateLimits: [Int] { return [width * height * 2 * 4, 1] }

@@ -9,7 +9,9 @@ typedef uint8_t byte;
 namespace {
 class RTMPExtTest : public testing::Test {
 protected:
-  void SetUp() override { RTMP_LogSetLevel(RTMP_LOGALL); }
+  void SetUp() override {
+    RTMP_LogSetLevel(RTMP_LOGALL);
+  }
 };
 
 TEST_F(RTMPExtTest, nalu_tag) {
@@ -23,18 +25,19 @@ TEST_F(RTMPExtTest, nalu_tag) {
   nalu[1] = 0xcf;
   nalu[nalu_size - 1] = 0xff;
 
-  size_t buffer_size = nalu_size + 16;
+  size_t buffer_size = nalu_size + 20;
   byte buffer[buffer_size];
   memset(buffer, 0x00, buffer_size);
 
   size_t expected_header_size = 16;
-  const byte expected_header[] = {0x09, 0x00, 0x00, 0x0f, 0x01, 0xaa, 0x02, 0x00, 0x00, 0x00, 0x00, 0x17, 0x01, 0x00, 0x00, 0x00};
+  const byte expected_header[] = {0x09, 0x00, 0x00, 0x13, 0x02, 0xaa, 0x01, 0x00, 0x00, 0x00, 0x00, 0x17, 0x01, 0x00, 0x00, 0x00};
   int count = RTMPEXT_MakeVideoNALUTag(timestamp, nalu, nalu_size, buffer, buffer_size);
-  EXPECT_EQ(count, nalu_size + expected_header_size);
-  RTMP_LogHex(RTMP_LOGINFO, expected_header, 16);
-  RTMP_LogHex(RTMP_LOGINFO, buffer, 16);
+  EXPECT_EQ(count, nalu_size + 4 + expected_header_size);
+
+  // RTMP_LogHex(RTMP_LOGINFO, expected_header, expected_header_size);
+  // RTMP_LogHex(RTMP_LOGINFO, buffer, expected_header_size);
   EXPECT_EQ(memcmp(buffer, expected_header, expected_header_size), 0);
-  EXPECT_EQ(memcmp(buffer + 16, nalu, nalu_size), 0);
+  EXPECT_EQ(memcmp(buffer + 20, nalu, nalu_size), 0);
 }
 
 /*
